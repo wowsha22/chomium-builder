@@ -7,15 +7,15 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual trigger from the GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -33,7 +33,7 @@ jobs:
           libgdk-pixbuf2.0-dev \
           libglib2.0-dev
 
-    - name: Install depot_tools
+    - name: Clone depot_tools
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
         echo "$PWD/depot_tools" >> $GITHUB_PATH
@@ -60,7 +60,7 @@ jobs:
         autoninja -C out/Default chrome
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: chromium-build
         path: chromium/out/Default/chrome
