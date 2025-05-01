@@ -1,0 +1,80 @@
+name: Chromium Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout repository
+    - name: Checkout source
+      uses: actions/checkout@v2
+
+    # Step 2: Install dependencies
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          git \
+          python3 \
+          python3-pip \
+          build-essential \
+          clang \
+          cmake \
+          ninja-build \
+          libnss3 \
+          libx11-dev \
+          libgdk-pixbuf2.0-dev \
+          libglib2.0-dev
+
+    # Step 3: Install depot_tools
+    - name: Install depot_tools
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        echo "$PWD/depot_tools" >> $GITHUB_PATH
+
+    # Step 4: Fetch Chromium source code
+    - name: Fetch Chromium source
+      run: |
+        mkdir chromium
+        cd chromium
+        fetch --nohooks chromium
+
+    # Step 5: Sync dependencies
+    - name: Sync dependencies
+      run: |
+        cd chromium
+        gclient sync
+
+    # Step 6: Configure the build
+    - name: Configure the build
+      run: |
+        cd chromium
+        gn gen out/Default
+
+    # Step 7: Build Chromium
+    - name: Build Chromium
+      run: |
+        cd chromium
+        autoninja -C out/Default chrome
+
+    # Step 8: (Optional) Run tests
+    # Uncomment this section if you'd like to run tests after building
+    # - name: Run tests
+    #   run: |
+    #     cd chromium
+    #     out/Default/chrome --headless --disable-gpu --remote-debugging-port=9222
+
+    # Step 9: Upload build artifact (Optional)
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: chromium-build
+        path: chromium/out/Default/chrome
