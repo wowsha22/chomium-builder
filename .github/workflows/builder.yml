@@ -1,4 +1,4 @@
-name: Chromium Build
+name: Chromium Build idk
 
 on:
   push:
