@@ -15,59 +15,59 @@ jobs:
       BUILD_ROOT: D:\chromium
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Install Windows build tools
-      shell: pwsh
-      run: |
-        choco install python3 --no-progress
-        refreshenv
+      - name: Install Windows build tools
+        shell: pwsh
+        run: |
+          choco install python3 --no-progress
+          refreshenv
 
-    - name: Prepare build directory on D:
-      shell: pwsh
-      run: |
-        Remove-Item -Recurse -Force $Env:BUILD_ROOT -ErrorAction Ignore
-        New-Item -ItemType Directory -Path $Env:BUILD_ROOT
+      - name: Prepare build directory on D:
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force $Env:BUILD_ROOT -ErrorAction Ignore
+          New-Item -ItemType Directory -Path $Env:BUILD_ROOT
 
-    - name: Clone depot_tools
-      shell: pwsh
-      run: |
-        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $Env:BUILD_ROOT\depot_tools
-        echo "$Env:BUILD_ROOT/depot_tools" >> $Env:GITHUB_PATH
+      - name: Clone depot_tools
+        shell: pwsh
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $Env:BUILD_ROOT\depot_tools
+          echo "$Env:BUILD_ROOT\depot_tools" >> $Env:GITHUB_PATH
 
-    - name: Fetch & sync Chromium (shallow + retry)
-      shell: pwsh
-      run: |
-        cd $Env:BUILD_ROOT
-        fetch --nohooks --no-history chromium
-        cd src
-        for ($i=1; $i -le 3; $i++) {
-          gclient sync -v && break
-          Write-Host "Retrying gclient sync ($i)…"
-          Start-Sleep -Seconds 15
-        }
+      - name: Fetch & sync Chromium (shallow + retry)
+        shell: pwsh
+        run: |
+          cd $Env:BUILD_ROOT
+          fetch --nohooks --no-history chromium
+          cd src
+          for ($i=1; $i -le 3; $i++) {
+            gclient sync -v && break
+            Write-Host "Retrying gclient sync ($i)…"
+            Start-Sleep -Seconds 15
+          }
 
-    - name: Configure Windows build (GN)
-      shell: pwsh
-      run: |
-        cd $Env:BUILD_ROOT\src
-        gn gen out\Default --args="is_debug=false is_component_build=false target_os=\"win\""
+      - name: Configure Windows build (GN)
+        shell: pwsh
+        run: |
+          cd $Env:BUILD_ROOT\src
+          gn gen out\Default --args='is_debug=false is_component_build=false target_os="win"'
 
-    - name: Build full Chrome
-      shell: pwsh
-      run: |
-        cd $Env:BUILD_ROOT\src
-        autoninja -C out\Default chrome
+      - name: Build full Chrome
+        shell: pwsh
+        run: |
+          cd $Env:BUILD_ROOT\src
+          autoninja -C out\Default chrome
 
-    - name: Package Windows installer stub
-      shell: pwsh
-      run: |
-        cd $Env:BUILD_ROOT\src\out\Default
-        Compress-Archive -Path mini_installer.exe -DestinationPath chrome-windows-mini_installer.zip
+      - name: Package Windows installer stub
+        shell: pwsh
+        run: |
+          cd $Env:BUILD_ROOT\src\out\Default
+          Compress-Archive -Path mini_installer.exe -DestinationPath chrome-windows-mini_installer.zip
 
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: chrome-windows-installer
-        path: ${{ env.BUILD_ROOT }}\src\out\Default\chrome-windows-mini_installer.zip
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-windows-installer
+          path: D:\chromium\src\out\Default\chrome-windows-mini_installer.zip
